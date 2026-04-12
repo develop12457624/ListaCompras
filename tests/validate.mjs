@@ -24,6 +24,10 @@ if (!html.includes('name="description"')) {
   console.error("index.html debe incluir meta descripción");
   process.exit(1);
 }
+if (!html.includes('charset="UTF-8"')) {
+  console.error("index.html debe declarar charset UTF-8");
+  process.exit(1);
+}
 
 execFileSync(process.execPath, ["--check", join(root, "app.js")], { stdio: "inherit" });
 
