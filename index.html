@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lista de compras</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 4h10v2H7V4zm0 4h10v2H7V8zm-2 4h14v8H5v-8zm2 2v4h10v-4H7z" fill="currentColor" opacity=".35"/>
+            <path d="M9 2v2H7.5C6.67 4 6 4.67 6 5.5V20c0 .83.67 1.5 1.5 1.5h9c.83 0 1.5-.67 1.5-1.5V5.5c0-.83-.67-1.5-1.5-1.5H15V2H9z" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <p class="eyebrow">Supermercado</p>
+          <h1 class="title">Mi lista de compras</h1>
+        </div>
+      </div>
+      <p class="subtitle">Organiza lo que necesitas antes de salir de casa</p>
+    </header>
+
+    <div class="composer">
+      <form class="form" id="form-add" autocomplete="off">
+        <label class="sr-only" for="input-item">Artículo</label>
+        <input type="text" id="input-item" class="input" placeholder="Ej.: leche sin lactosa, pan integral…" maxlength="120" required>
+        <div class="form-row">
+          <label class="sr-only" for="select-cat">Categoría</label>
+          <select id="select-cat" class="select">
+            <option value="frutas">Frutas y verduras</option>
+            <option value="lacteos">Lácteos</option>
+            <option value="carnes">Carnes y pescado</option>
+            <option value="pan">Panadería</option>
+            <option value="despensa">Despensa</option>
+            <option value="bebidas">Bebidas</option>
+            <option value="limpieza">Limpieza e higiene</option>
+            <option value="otros">Otros</option>
+          </select>
+          <button type="submit" class="btn btn-primary">
+            <span>Añadir</span>
+            <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <div class="toolbar">
+      <p class="stats" id="stats" aria-live="polite"></p>
+      <button type="button" class="btn btn-ghost" id="btn-clear" hidden>Vaciar comprados</button>
+    </div>
+
+    <div class="lists" id="lists"></div>
+
+    <div class="empty" id="empty">
+      <div class="empty-visual" aria-hidden="true">
+        <svg width="72" height="72" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="48" cy="48" r="40" fill="url(#g)" opacity=".25"/>
+          <path d="M32 38h32v36H32V38z" stroke="url(#g2)" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M38 38V32a10 10 0 0110-10 10 10 0 0110 10v6" stroke="url(#g2)" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M44 52h8M48 48v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".5"/>
+          <defs>
+            <linearGradient id="g" x1="48" y1="8" x2="48" y2="88" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#5eb0ff"/><stop offset="1" stop-color="#4ecf8a"/>
+            </linearGradient>
+            <linearGradient id="g2" x1="32" y1="32" x2="64" y2="74" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#7eb8ff"/><stop offset="1" stop-color="#6dd9a8"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <p class="empty-title">Tu carrito está vacío</p>
+      <p class="empty-desc">Escribe arriba lo que necesitas comprar y lo verás ordenado por sección del supermercado.</p>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
