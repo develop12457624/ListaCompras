@@ -1,4 +1,4 @@
-const STORAGE_KEY = "lista-compras-v1";
+const STORAGE_KEY = "lista-compras-feature-a";
 
 const CATEGORY_LABELS = {
   frutas: "Frutas y verduras",
