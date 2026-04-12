@@ -1,6 +1,7 @@
 {
   "name": "lista-compras",
   "version": "1.0.0",
+  "description": "Aplicación web de lista de compras por categorías con persistencia local.",
   "private": true,
   "type": "module",
   "scripts": {
