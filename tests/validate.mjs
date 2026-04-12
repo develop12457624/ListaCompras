@@ -20,6 +20,10 @@ if (!html.includes('<html lang="es">')) {
   console.error("index.html no contiene estructura esperada");
   process.exit(1);
 }
+if (!html.includes('name="description"')) {
+  console.error("index.html debe incluir meta descripción");
+  process.exit(1);
+}
 
 execFileSync(process.execPath, ["--check", join(root, "app.js")], { stdio: "inherit" });
 
