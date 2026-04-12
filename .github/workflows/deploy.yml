@@ -1,0 +1,36 @@
+name: Desplegar
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.implementacion.outputs.page_url }}
+    steps:
+      - name: Obtener código
+        uses: actions/checkout@v4
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir artefacto estático
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      - name: Publicar en Pages
+        id: implementacion
+        uses: actions/deploy-pages@v4
