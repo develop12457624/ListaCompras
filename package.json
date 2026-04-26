@@ -1,10 +1,11 @@
 {
   "name": "lista-compras",
   "version": "1.0.0",
-  "description": "Aplicación web de lista de compras por categorías con persistencia local.",
+  "description": "Aplicacion web de lista de compras por categorias con ORM local.",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node tests/validate.mjs"
+    "start": "node servidor.js",
+    "test": "node tests/run.mjs && node tests/validate.mjs"
   }
 }

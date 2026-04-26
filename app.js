@@ -1,173 +1,175 @@
-const STORAGE_KEY = "lista-compras-v2";
+import {
+  CATEGORIAS,
+  ETIQUETAS_CATEGORIA,
+  agruparPorCategoria,
+  calcularResumen,
+} from "./src/listaCompras.js";
 
-const CATEGORY_LABELS = {
-  frutas: "Frutas y verduras",
-  lacteos: "Lácteos",
-  carnes: "Carnes y pescado",
-  pan: "Panadería",
-  despensa: "Despensa",
-  bebidas: "Bebidas",
-  limpieza: "Limpieza e higiene",
-  otros: "Otros",
-};
+const formulario = document.getElementById("form-add");
+const entradaArticulo = document.getElementById("input-item");
+const selectorCategoria = document.getElementById("select-cat");
+const contenedorListas = document.getElementById("lists");
+const mensajeVacio = document.getElementById("empty");
+const resumenVista = document.getElementById("stats");
+const botonVaciar = document.getElementById("btn-clear");
 
-const CATEGORY_ORDER = [
-  "frutas",
-  "lacteos",
-  "carnes",
-  "pan",
-  "despensa",
-  "bebidas",
-  "limpieza",
-  "otros",
-];
+let articulos = [];
 
-function loadItems() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+async function cargarArticulos() {
+  const respuesta = await fetch("/api/articulos");
+  articulos = await respuesta.json();
+  renderizar();
 }
 
-function saveItems(items) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+async function guardarArticulo(nombre, categoria) {
+  const respuesta = await fetch("/api/articulos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nombre, categoria }),
+  });
+
+  if (!respuesta.ok) {
+    throw new Error("No se pudo guardar el articulo");
+  }
+
+  articulos.push(await respuesta.json());
+  renderizar();
 }
 
-function uid() {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+async function actualizarCompra(articulo, comprado) {
+  const respuesta = await fetch(`/api/articulos/${articulo.id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ comprado }),
+  });
+
+  if (!respuesta.ok) {
+    throw new Error("No se pudo actualizar el articulo");
+  }
+
+  const articuloActualizado = await respuesta.json();
+  articulos = articulos.map((actual) => (actual.id === articulo.id ? articuloActualizado : actual));
+  renderizar();
 }
 
-const form = document.getElementById("form-add");
-const inputItem = document.getElementById("input-item");
-const selectCat = document.getElementById("select-cat");
-const listsEl = document.getElementById("lists");
-const emptyEl = document.getElementById("empty");
-const statsEl = document.getElementById("stats");
-const btnClear = document.getElementById("btn-clear");
+async function quitarArticulo(id) {
+  const respuesta = await fetch(`/api/articulos/${id}`, { method: "DELETE" });
 
-let items = loadItems();
-
-function render() {
-  listsEl.innerHTML = "";
-
-  const byCat = {};
-  for (const key of CATEGORY_ORDER) {
-    byCat[key] = [];
-  }
-  for (const item of items) {
-    const cat = CATEGORY_ORDER.includes(item.category) ? item.category : "otros";
-    byCat[cat].push(item);
+  if (!respuesta.ok) {
+    throw new Error("No se pudo quitar el articulo");
   }
 
-  const hasAny = items.length > 0;
-  emptyEl.hidden = hasAny;
+  articulos = articulos.filter((articulo) => articulo.id !== id);
+  renderizar();
+}
 
-  let pending = 0;
-  let done = 0;
-  for (const item of items) {
-    if (item.done) done += 1;
-    else pending += 1;
+async function vaciarComprados() {
+  const respuesta = await fetch("/api/articulos-comprados", { method: "DELETE" });
+
+  if (!respuesta.ok) {
+    throw new Error("No se pudo vaciar la lista");
   }
 
-  if (!hasAny) {
-    statsEl.textContent = "";
-    btnClear.hidden = true;
+  articulos = articulos.filter((articulo) => !articulo.comprado);
+  renderizar();
+}
+
+function renderizar() {
+  contenedorListas.innerHTML = "";
+
+  const grupos = agruparPorCategoria(articulos);
+  const resumen = calcularResumen(articulos);
+  const hayArticulos = articulos.length > 0;
+
+  mensajeVacio.hidden = hayArticulos;
+  resumenVista.textContent = resumen.texto;
+  botonVaciar.hidden = resumen.comprados === 0;
+
+  if (!hayArticulos) {
     return;
   }
 
-  statsEl.textContent =
-    pending === 0 && done > 0
-      ? `Todo listo: ${done} artículo${done === 1 ? "" : "s"} comprado${done === 1 ? "" : "s"}.`
-      : pending > 0
-        ? `${pending} pendiente${pending === 1 ? "" : "s"}${done > 0 ? ` · ${done} comprado${done === 1 ? "" : "s"}` : ""}`
-        : `${items.length} artículo${items.length === 1 ? "" : "s"}`;
+  for (const categoria of CATEGORIAS) {
+    const grupo = grupos[categoria];
 
-  btnClear.hidden = done === 0;
-
-  for (const cat of CATEGORY_ORDER) {
-    const group = byCat[cat];
-    if (group.length === 0) continue;
-
-    const section = document.createElement("section");
-    section.className = "section";
-    section.dataset.category = cat;
-    section.setAttribute("aria-label", CATEGORY_LABELS[cat]);
-
-    const h2 = document.createElement("h2");
-    h2.className = "section-title";
-    h2.textContent = CATEGORY_LABELS[cat];
-    section.appendChild(h2);
-
-    for (const item of group) {
-      const row = document.createElement("div");
-      row.className = "item" + (item.done ? " done" : "");
-      row.dataset.id = item.id;
-
-      const label = document.createElement("label");
-      label.className = "item-label";
-
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = item.done;
-      cb.addEventListener("change", () => {
-        item.done = cb.checked;
-        saveItems(items);
-        render();
-      });
-
-      const span = document.createElement("span");
-      span.className = "item-text";
-      span.textContent = item.text;
-
-      label.appendChild(cb);
-      label.appendChild(span);
-
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "btn-remove";
-      remove.setAttribute("aria-label", "Quitar de la lista");
-      remove.textContent = "×";
-      remove.addEventListener("click", () => {
-        items = items.filter((x) => x.id !== item.id);
-        saveItems(items);
-        render();
-      });
-
-      row.appendChild(label);
-      row.appendChild(remove);
-      section.appendChild(row);
+    if (grupo.length === 0) {
+      continue;
     }
 
-    listsEl.appendChild(section);
+    const seccion = document.createElement("section");
+    seccion.className = "section";
+    seccion.dataset.category = categoria;
+    seccion.setAttribute("aria-label", ETIQUETAS_CATEGORIA[categoria]);
+
+    const titulo = document.createElement("h2");
+    titulo.className = "section-title";
+    titulo.textContent = ETIQUETAS_CATEGORIA[categoria];
+    seccion.appendChild(titulo);
+
+    for (const articulo of grupo) {
+      const fila = document.createElement("div");
+      fila.className = `item${articulo.comprado ? " done" : ""}`;
+      fila.dataset.id = articulo.id;
+
+      const etiqueta = document.createElement("label");
+      etiqueta.className = "item-label";
+
+      const casilla = document.createElement("input");
+      casilla.type = "checkbox";
+      casilla.checked = articulo.comprado;
+      casilla.addEventListener("change", () => {
+        actualizarCompra(articulo, casilla.checked).catch(mostrarError);
+      });
+
+      const texto = document.createElement("span");
+      texto.className = "item-text";
+      texto.textContent = articulo.nombre;
+
+      etiqueta.appendChild(casilla);
+      etiqueta.appendChild(texto);
+
+      const botonQuitar = document.createElement("button");
+      botonQuitar.type = "button";
+      botonQuitar.className = "btn-remove";
+      botonQuitar.setAttribute("aria-label", "Quitar de la lista");
+      botonQuitar.textContent = "x";
+      botonQuitar.addEventListener("click", () => {
+        quitarArticulo(articulo.id).catch(mostrarError);
+      });
+
+      fila.appendChild(etiqueta);
+      fila.appendChild(botonQuitar);
+      seccion.appendChild(fila);
+    }
+
+    contenedorListas.appendChild(seccion);
   }
 }
 
-form.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const text = inputItem.value.trim();
-  if (!text) return;
+function mostrarError(error) {
+  resumenVista.textContent = error.message;
+}
 
-  items.push({
-    id: uid(),
-    text,
-    category: selectCat.value,
-    done: false,
-  });
-  saveItems(items);
-  inputItem.value = "";
-  inputItem.focus();
-  render();
+formulario.addEventListener("submit", (evento) => {
+  evento.preventDefault();
+  const nombre = entradaArticulo.value.trim();
+
+  if (!nombre) {
+    return;
+  }
+
+  guardarArticulo(nombre, selectorCategoria.value)
+    .then(() => {
+      entradaArticulo.value = "";
+      entradaArticulo.focus();
+    })
+    .catch(mostrarError);
 });
 
-btnClear.addEventListener("click", () => {
-  items = items.filter((x) => !x.done);
-  saveItems(items);
-  render();
+botonVaciar.addEventListener("click", () => {
+  vaciarComprados().catch(mostrarError);
 });
 
-render();
-inputItem.focus();
+cargarArticulos()
+  .then(() => entradaArticulo.focus())
+  .catch(mostrarError);

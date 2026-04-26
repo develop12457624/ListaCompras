@@ -5,3 +5,4 @@ Thumbs.db
 npm-debug.log*
 .env
 .env.*
+datos/*.bd.json
